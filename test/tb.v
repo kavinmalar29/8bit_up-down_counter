@@ -1,19 +1,20 @@
 `default_nettype none
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 
-/* This testbench just instantiates the module and makes some convenient wires
-   that can be driven / tested by the cocotb test.py.
+/* Testbench for 8-bit Up/Down Counter
+   This instantiates the user project (tt_um_updown_counter)
+   and drives its inputs for simulation.
 */
 module tb ();
 
-  // Dump the signals to a VCD file. You can view it with gtkwave or surfer.
+  // Dump the signals to a VCD file (view with GTKWave or Surfer)
   initial begin
     $dumpfile("tb.vcd");
     $dumpvars(0, tb);
     #1;
   end
 
-  // Wire up the inputs and outputs:
+  // Inputs & outputs
   reg clk;
   reg rst_n;
   reg ena;
@@ -22,28 +23,58 @@ module tb ();
   wire [7:0] uo_out;
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
+
 `ifdef GL_TEST
   wire VPWR = 1'b1;
   wire VGND = 1'b0;
 `endif
 
-  // Replace tt_um_example with your module name:
-  tt_um_example user_project (
+  // Instantiate DUT (replace tt_um_example with your module)
+  tt_um_updown_counter user_project (
 
-      // Include power ports for the Gate Level test:
+      // Power pins for GL sim
 `ifdef GL_TEST
       .VPWR(VPWR),
       .VGND(VGND),
 `endif
 
-      .ui_in  (ui_in),    // Dedicated inputs
-      .uo_out (uo_out),   // Dedicated outputs
-      .uio_in (uio_in),   // IOs: Input path
-      .uio_out(uio_out),  // IOs: Output path
-      .uio_oe (uio_oe),   // IOs: Enable path (active high: 0=input, 1=output)
-      .ena    (ena),      // enable - goes high when design is selected
+      .ui_in  (ui_in),    // control inputs
+      .uo_out (uo_out),   // counter outputs
+      .uio_in (uio_in),   // unused
+      .uio_out(uio_out),  // unused
+      .uio_oe (uio_oe),   // unused
+      .ena    (ena),      // always high
       .clk    (clk),      // clock
-      .rst_n  (rst_n)     // not reset
+      .rst_n  (rst_n)     // active-low reset
   );
+
+  // Clock generation: 10ns period
+  initial clk = 0;
+  always #5 clk = ~clk;
+
+  // Stimulus
+  initial begin
+    ena    = 1;        // design enabled
+    uio_in = 8'b0;     // unused
+    ui_in  = 8'b0;     // {up_down, enable} are ui_in[1:0]
+    rst_n  = 0;        // assert reset
+    #20;
+    rst_n  = 1;        // release reset
+
+    // Count up (ui_in[0] = enable, ui_in[1] = up_down)
+    ui_in[0] = 1; // enable
+    ui_in[1] = 1; // up
+    #100;
+
+    // Count down
+    ui_in[1] = 0; // down
+    #100;
+
+    // Disable counting
+    ui_in[0] = 0;
+    #50;
+
+    $finish;
+  end
 
 endmodule
