@@ -1,7 +1,7 @@
 # Tiny Tapeout project information
 project:
   title:        "8bit_up-down_counter"      
-  author:       "Gopi Krishnan M"      
+  author:       "Kavin Malar U"      
   discord:      ""      
   description:  "An 8-bit up/down counter that increments or decrements its value from 0 to 255 based on a control input"      
   language:     "Verilog" 
